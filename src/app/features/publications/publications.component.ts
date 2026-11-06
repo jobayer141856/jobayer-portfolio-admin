@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -147,7 +147,7 @@ import { ToastService } from '../../core/services/toast.service';
             <div class="flex justify-end gap-3 mt-6">
               <button
                 type="button"
-                (click)="showModal = false"
+                (click)="closeModal()"
                 class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-medium"
               >
                 Cancel
@@ -170,6 +170,7 @@ import { ToastService } from '../../core/services/toast.service';
 export class PublicationsComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = true;
   publications: AdminPublicationDto[] = [];
@@ -194,14 +195,17 @@ export class PublicationsComponent implements OnInit {
 
   loadPublications(): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.http.get<AdminPublicationDto[]>(`${environment.apiBaseUrl}/api/v1/admin/publications`).subscribe({
       next: (res) => {
         this.publications = res || [];
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load publications.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -220,6 +224,12 @@ export class PublicationsComponent implements OnInit {
       status: 'Published',
     };
     this.showModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.cdr.markForCheck();
   }
 
   onTitleChange(): void {
@@ -238,7 +248,10 @@ export class PublicationsComponent implements OnInit {
         this.showModal = false;
         this.loadPublications();
       },
-      error: () => this.toastService.error('Failed to add publication'),
+      error: () => {
+        this.toastService.error('Failed to add publication');
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -249,7 +262,10 @@ export class PublicationsComponent implements OnInit {
           this.toastService.success('Publication deleted');
           this.loadPublications();
         },
-        error: () => this.toastService.error('Failed to delete publication'),
+        error: () => {
+          this.toastService.error('Failed to delete publication');
+          this.cdr.markForCheck();
+        },
       });
     }
   }

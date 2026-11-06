@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -109,6 +109,7 @@ import { ToastService } from '../../core/services/toast.service';
 export class MediaComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = true;
   isUploading = false;
@@ -120,14 +121,17 @@ export class MediaComponent implements OnInit {
 
   loadMedia(): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.http.get<PaginatedList<MediaAssetDto>>(`${environment.apiBaseUrl}/api/v1/admin/media?pageSize=50`).subscribe({
       next: (res) => {
         this.assets = res.items || [];
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load media assets.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -154,6 +158,7 @@ export class MediaComponent implements OnInit {
     if (!file) return;
 
     this.isUploading = true;
+    this.cdr.markForCheck();
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', 'uploads');
@@ -167,6 +172,7 @@ export class MediaComponent implements OnInit {
       error: () => {
         this.isUploading = false;
         this.toastService.error('Failed to upload file.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -186,7 +192,10 @@ export class MediaComponent implements OnInit {
           this.toastService.success('Media asset deleted');
           this.loadMedia();
         },
-        error: () => this.toastService.error('Failed to delete media asset'),
+        error: () => {
+          this.toastService.error('Failed to delete media asset');
+          this.cdr.markForCheck();
+        },
       });
     }
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -107,7 +107,8 @@ import { ToastService } from '../../core/services/toast.service';
                 <input
                   type="date"
                   [(ngModel)]="newCert.issueDate"
-                  class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-slate-100"
+                  (click)="$any($event.target).showPicker?.()"
+                  class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-slate-100 cursor-pointer"
                 />
               </div>
 
@@ -135,7 +136,7 @@ import { ToastService } from '../../core/services/toast.service';
             <div class="flex justify-end gap-3 mt-6">
               <button
                 type="button"
-                (click)="showModal = false"
+                (click)="closeModal()"
                 class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-medium"
               >
                 Cancel
@@ -158,6 +159,7 @@ import { ToastService } from '../../core/services/toast.service';
 export class CertificationsComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = true;
   certifications: AdminCertificationDto[] = [];
@@ -180,14 +182,17 @@ export class CertificationsComponent implements OnInit {
 
   loadCertifications(): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.http.get<AdminCertificationDto[]>(`${environment.apiBaseUrl}/api/v1/admin/certifications`).subscribe({
       next: (res) => {
         this.certifications = res || [];
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load certifications.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -204,6 +209,12 @@ export class CertificationsComponent implements OnInit {
       status: 'Published',
     };
     this.showModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.cdr.markForCheck();
   }
 
   saveCertification(): void {
@@ -213,7 +224,10 @@ export class CertificationsComponent implements OnInit {
         this.showModal = false;
         this.loadCertifications();
       },
-      error: () => this.toastService.error('Failed to add certification'),
+      error: () => {
+        this.toastService.error('Failed to add certification');
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -224,7 +238,10 @@ export class CertificationsComponent implements OnInit {
           this.toastService.success('Certification deleted');
           this.loadCertifications();
         },
-        error: () => this.toastService.error('Failed to delete certification'),
+        error: () => {
+          this.toastService.error('Failed to delete certification');
+          this.cdr.markForCheck();
+        },
       });
     }
   }

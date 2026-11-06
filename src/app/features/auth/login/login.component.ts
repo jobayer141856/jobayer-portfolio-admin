@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -101,6 +101,7 @@ export class LoginComponent {
   private toastService = inject(ToastService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = false;
   errorMessage: string | null = null;
@@ -118,6 +119,7 @@ export class LoginComponent {
 
     this.isLoading = true;
     this.errorMessage = null;
+    this.cdr.markForCheck();
 
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
@@ -132,6 +134,7 @@ export class LoginComponent {
           err?.error?.detail ||
           err?.error?.title ||
           'Invalid credentials. Please verify your email and password.';
+        this.cdr.markForCheck();
       },
     });
   }

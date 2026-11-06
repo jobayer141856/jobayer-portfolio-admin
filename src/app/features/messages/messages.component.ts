@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -169,6 +169,7 @@ import { ToastService } from '../../core/services/toast.service';
 export class MessagesComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = true;
   messages: AdminContactMessageDto[] = [];
@@ -181,6 +182,7 @@ export class MessagesComponent implements OnInit {
 
   loadMessages(): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     let url = `${environment.apiBaseUrl}/api/v1/admin/messages?pageSize=50`;
     if (this.selectedStatus) {
       url += `&status=${this.selectedStatus}`;
@@ -193,10 +195,12 @@ export class MessagesComponent implements OnInit {
           this.activeMessage = this.messages[0];
         }
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load inquiries.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -212,12 +216,14 @@ export class MessagesComponent implements OnInit {
     if (msg.status === 'Unread') {
       this.changeStatus(msg, 'Read');
     }
+    this.cdr.markForCheck();
   }
 
   changeStatus(msg: AdminContactMessageDto, newStatus: MessageStatus): void {
     this.http.patch(`${environment.apiBaseUrl}/api/v1/admin/messages/${msg.id}/status`, { status: newStatus }).subscribe({
       next: () => {
         msg.status = newStatus;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -230,7 +236,10 @@ export class MessagesComponent implements OnInit {
           this.activeMessage = null;
           this.loadMessages();
         },
-        error: () => this.toastService.error('Failed to delete message'),
+        error: () => {
+          this.toastService.error('Failed to delete message');
+          this.cdr.markForCheck();
+        },
       });
     }
   }

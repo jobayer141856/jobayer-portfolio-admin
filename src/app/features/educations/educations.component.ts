@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -138,7 +138,8 @@ import { ToastService } from '../../core/services/toast.service';
                   <input
                     type="date"
                     [(ngModel)]="newEdu.startDate"
-                    class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-slate-100"
+                    (click)="$any($event.target).showPicker?.()"
+                    class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-slate-100 cursor-pointer"
                   />
                 </div>
                 <div>
@@ -147,7 +148,8 @@ import { ToastService } from '../../core/services/toast.service';
                     type="date"
                     [(ngModel)]="newEdu.endDate"
                     [disabled]="newEdu.isCurrent"
-                    class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-slate-100 disabled:opacity-40"
+                    (click)="$any($event.target).showPicker?.()"
+                    class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-slate-100 disabled:opacity-40 cursor-pointer"
                   />
                 </div>
               </div>
@@ -157,6 +159,7 @@ import { ToastService } from '../../core/services/toast.service';
                   <input
                     type="checkbox"
                     [(ngModel)]="newEdu.isCurrent"
+                    (ngModelChange)="onCurrentChange($event)"
                     class="rounded bg-slate-950 border-slate-700 text-blue-600 focus:ring-blue-500 h-4 w-4"
                   />
                   <span>Currently enrolled</span>
@@ -212,6 +215,7 @@ import { ToastService } from '../../core/services/toast.service';
 export class EducationsComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = true;
   educations: AdminEducationDto[] = [];
@@ -236,14 +240,17 @@ export class EducationsComponent implements OnInit {
 
   loadEducations(): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.http.get<AdminEducationDto[]>(`${environment.apiBaseUrl}/api/v1/admin/educations`).subscribe({
       next: (res) => {
         this.educations = res || [];
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load education entries.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -262,6 +269,19 @@ export class EducationsComponent implements OnInit {
       status: 'Published',
     };
     this.showModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.cdr.markForCheck();
+  }
+
+  onCurrentChange(isCurrent: boolean): void {
+    if (isCurrent) {
+      this.newEdu.endDate = undefined;
+    }
+    this.cdr.markForCheck();
   }
 
   saveEducation(): void {
@@ -271,7 +291,10 @@ export class EducationsComponent implements OnInit {
         this.showModal = false;
         this.loadEducations();
       },
-      error: () => this.toastService.error('Failed to save education entry'),
+      error: () => {
+        this.toastService.error('Failed to save education entry');
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -282,7 +305,10 @@ export class EducationsComponent implements OnInit {
           this.toastService.success('Education record deleted');
           this.loadEducations();
         },
-        error: () => this.toastService.error('Failed to delete education record'),
+        error: () => {
+          this.toastService.error('Failed to delete education record');
+          this.cdr.markForCheck();
+        },
       });
     }
   }

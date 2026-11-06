@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -211,6 +211,7 @@ export class ProjectEditComponent implements OnInit, HasUnsavedChanges {
   private toastService = inject(ToastService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private cdr = inject(ChangeDetectorRef);
 
   isNew = true;
   projectId: string | null = null;
@@ -248,6 +249,7 @@ export class ProjectEditComponent implements OnInit, HasUnsavedChanges {
 
   loadProject(id: string): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.http.get<AdminProjectDto>(`${environment.apiBaseUrl}/api/v1/admin/projects/${id}`).subscribe({
       next: (data) => {
         this.projectForm.patchValue({
@@ -267,10 +269,12 @@ export class ProjectEditComponent implements OnInit, HasUnsavedChanges {
         });
         this.projectForm.markAsPristine();
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load project details.');
+        this.cdr.markForCheck();
       },
     });
   }

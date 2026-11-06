@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -118,7 +118,8 @@ import { mapBackendValidationErrors } from '../../core/utils/form-error-mapper';
                 <input
                   type="date"
                   formControlName="startDate"
-                  class="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:ring-2 focus:ring-blue-500"
+                  (click)="$any($event.target).showPicker?.()"
+                  class="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 />
               </div>
 
@@ -127,8 +128,8 @@ import { mapBackendValidationErrors } from '../../core/utils/form-error-mapper';
                 <input
                   type="date"
                   formControlName="endDate"
-                  [disabled]="expForm.get('isCurrent')?.value"
-                  class="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:ring-2 focus:ring-blue-500 disabled:opacity-40"
+                  (click)="$any($event.target).showPicker?.()"
+                  class="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:ring-2 focus:ring-blue-500 disabled:opacity-40 cursor-pointer"
                 />
               </div>
 
@@ -206,6 +207,7 @@ export class ExperienceEditComponent implements OnInit, HasUnsavedChanges {
   private toastService = inject(ToastService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private cdr = inject(ChangeDetectorRef);
 
   isNew = true;
   expId: string | null = null;
@@ -233,6 +235,17 @@ export class ExperienceEditComponent implements OnInit, HasUnsavedChanges {
   }
 
   ngOnInit(): void {
+    this.expForm.get('isCurrent')?.valueChanges.subscribe((isCurrent) => {
+      const endCtrl = this.expForm.get('endDate');
+      if (isCurrent) {
+        endCtrl?.disable();
+        endCtrl?.setValue('');
+      } else {
+        endCtrl?.enable();
+      }
+      this.cdr.markForCheck();
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id && id !== 'new') {
       this.isNew = false;
@@ -243,6 +256,7 @@ export class ExperienceEditComponent implements OnInit, HasUnsavedChanges {
 
   loadExperience(id: string): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.http.get<AdminExperienceDto>(`${environment.apiBaseUrl}/api/v1/admin/experiences/${id}`).subscribe({
       next: (data) => {
         this.expForm.patchValue({
@@ -260,12 +274,21 @@ export class ExperienceEditComponent implements OnInit, HasUnsavedChanges {
           status: data.status,
           displayOrder: data.displayOrder,
         });
+
+        if (data.isCurrent) {
+          this.expForm.get('endDate')?.disable();
+        } else {
+          this.expForm.get('endDate')?.enable();
+        }
+
         this.expForm.markAsPristine();
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load experience details.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -277,7 +300,7 @@ export class ExperienceEditComponent implements OnInit, HasUnsavedChanges {
     }
 
     this.isSaving = true;
-    const val = this.expForm.value;
+    const val = this.expForm.getRawValue();
 
     const resp = (val.responsibilitiesRaw || '')
       .split('\n')
@@ -322,6 +345,7 @@ export class ExperienceEditComponent implements OnInit, HasUnsavedChanges {
           } else {
             this.toastService.error('Failed to create experience.');
           }
+          this.cdr.markForCheck();
         },
       });
     } else {
@@ -344,6 +368,7 @@ export class ExperienceEditComponent implements OnInit, HasUnsavedChanges {
           } else {
             this.toastService.error('Failed to update experience.');
           }
+          this.cdr.markForCheck();
         },
       });
     }

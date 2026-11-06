@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -200,6 +200,7 @@ import { ToastService } from '../../core/services/toast.service';
 export class SkillsComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = true;
   categories: AdminSkillCategoryDto[] = [];
@@ -230,14 +231,17 @@ export class SkillsComponent implements OnInit {
 
   loadSkills(): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.http.get<AdminSkillCategoryDto[]>(`${environment.apiBaseUrl}/api/v1/admin/skills`).subscribe({
       next: (res) => {
         this.categories = res || [];
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load skills.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -251,6 +255,12 @@ export class SkillsComponent implements OnInit {
       isVisible: true,
     };
     this.showCategoryModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeCategoryModal(): void {
+    this.showCategoryModal = false;
+    this.cdr.markForCheck();
   }
 
   saveCategory(): void {
@@ -260,7 +270,10 @@ export class SkillsComponent implements OnInit {
         this.showCategoryModal = false;
         this.loadSkills();
       },
-      error: () => this.toastService.error('Failed to create category'),
+      error: () => {
+        this.toastService.error('Failed to create category');
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -271,7 +284,10 @@ export class SkillsComponent implements OnInit {
           this.toastService.success('Category deleted');
           this.loadSkills();
         },
-        error: () => this.toastService.error('Failed to delete category'),
+        error: () => {
+          this.toastService.error('Failed to delete category');
+          this.cdr.markForCheck();
+        },
       });
     }
   }
@@ -286,6 +302,12 @@ export class SkillsComponent implements OnInit {
       isVisible: true,
     };
     this.showItemModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeItemModal(): void {
+    this.showItemModal = false;
+    this.cdr.markForCheck();
   }
 
   saveItem(): void {
@@ -295,7 +317,10 @@ export class SkillsComponent implements OnInit {
         this.showItemModal = false;
         this.loadSkills();
       },
-      error: () => this.toastService.error('Failed to add skill'),
+      error: () => {
+        this.toastService.error('Failed to add skill');
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -306,7 +331,10 @@ export class SkillsComponent implements OnInit {
           this.toastService.success('Skill deleted');
           this.loadSkills();
         },
-        error: () => this.toastService.error('Failed to delete skill'),
+        error: () => {
+          this.toastService.error('Failed to delete skill');
+          this.cdr.markForCheck();
+        },
       });
     }
   }
