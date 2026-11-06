@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -175,6 +175,48 @@ import { mapBackendValidationErrors } from '../../core/utils/form-error-mapper';
             </div>
           </div>
 
+          <!-- Résumé / CV Document -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+              <h2 class="text-base font-semibold text-slate-100">Curriculum Vitae (PDF)</h2>
+              @if (currentResumeUrl()) {
+                <a
+                  [href]="currentResumeUrl()"
+                  target="_blank"
+                  download
+                  class="text-xs text-blue-400 hover:underline flex items-center gap-1 font-normal"
+                >
+                  View / Download Current CV →
+                </a>
+              }
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div class="flex-1">
+                <p class="text-xs text-slate-400 mb-2">
+                  Upload your CV in PDF format. This file will be served to visitors when they click "Download CV".
+                </p>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  (change)="onCvFileSelected($event)"
+                  [disabled]="isUploadingCv()"
+                  class="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer"
+                />
+              </div>
+
+              @if (isUploadingCv()) {
+                <div class="text-xs text-blue-400 flex items-center gap-2">
+                  <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                  </svg>
+                  <span>Uploading CV...</span>
+                </div>
+              }
+            </div>
+          </div>
+
           <!-- SEO Metadata -->
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
             <h2 class="text-base font-semibold text-slate-100 border-b border-slate-800 pb-3">SEO Defaults</h2>
@@ -209,6 +251,8 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
 
   isLoading = true;
   isSaving = false;
+  isUploadingCv = signal<boolean>(false);
+  currentResumeUrl = signal<string | null>(null);
 
   profileForm: FormGroup = this.fb.group({
     displayName: ['', [Validators.required, Validators.maxLength(150)]],
@@ -269,6 +313,13 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
           });
         }
 
+        const fullResumeUrl = data.resumePdfUrl
+          ? data.resumePdfUrl.startsWith('http')
+            ? data.resumePdfUrl
+            : `${environment.apiBaseUrl}${data.resumePdfUrl}`
+          : null;
+        this.currentResumeUrl.set(fullResumeUrl);
+
         this.profileForm.markAsPristine();
         this.isLoading = false;
       },
@@ -307,6 +358,13 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
     this.http.put<AdminProfileDto>(`${environment.apiBaseUrl}/api/v1/admin/profile`, formValue).subscribe({
       next: (updated) => {
         this.isSaving = false;
+        const fullResumeUrl = updated.resumePdfUrl
+          ? updated.resumePdfUrl.startsWith('http')
+            ? updated.resumePdfUrl
+            : `${environment.apiBaseUrl}${updated.resumePdfUrl}`
+          : null;
+        this.currentResumeUrl.set(fullResumeUrl);
+
         this.profileForm.markAsPristine();
         this.toastService.success('Profile updated successfully!');
       },
@@ -318,6 +376,40 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
         } else {
           this.toastService.error('Failed to update profile.');
         }
+      },
+    });
+  }
+
+  onCvFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    if (file.type !== 'application/pdf') {
+      this.toastService.error('Please upload a PDF document.');
+      return;
+    }
+
+    this.isUploadingCv.set(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', 'resumes');
+    formData.append('altText', `${file.name} Résumé`);
+
+    this.http.post<any>(`${environment.apiBaseUrl}/api/v1/admin/media/upload`, formData).subscribe({
+      next: (asset) => {
+        this.isUploadingCv.set(false);
+        this.profileForm.patchValue({ resumePdfAssetId: asset.id });
+        const fullUrl = asset.publicUrl?.startsWith('http')
+          ? asset.publicUrl
+          : `${environment.apiBaseUrl}${asset.publicUrl}`;
+        this.currentResumeUrl.set(fullUrl);
+        this.profileForm.markAsDirty();
+        this.toastService.success('CV uploaded successfully! Remember to save your profile.');
+      },
+      error: () => {
+        this.isUploadingCv.set(false);
+        this.toastService.error('Failed to upload CV.');
       },
     });
   }
