@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AdminPublicationDto, CreatePublicationRequest } from '../../core/models/publication.model';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-publications',
@@ -171,6 +172,7 @@ export class PublicationsComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private confirmService = inject(ConfirmDialogService);
 
   isLoading = true;
   publications: AdminPublicationDto[] = [];
@@ -255,19 +257,27 @@ export class PublicationsComponent implements OnInit {
     });
   }
 
-  deletePublication(pub: AdminPublicationDto): void {
-    if (window.confirm(`Delete publication "${pub.title}"?`)) {
-      this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/publications/${pub.id}`).subscribe({
-        next: () => {
-          this.toastService.success('Publication deleted');
-          this.loadPublications();
-        },
-        error: () => {
-          this.toastService.error('Failed to delete publication');
-          this.cdr.markForCheck();
-        },
-      });
-    }
+  async deletePublication(pub: AdminPublicationDto): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Publication',
+      itemName: pub.title,
+      message: `Are you sure you want to permanently delete publication "${pub.title}"?`,
+      confirmText: 'Delete Publication',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/publications/${pub.id}`).subscribe({
+      next: () => {
+        this.toastService.success('Publication deleted');
+        this.loadPublications();
+      },
+      error: () => {
+        this.toastService.error('Failed to delete publication');
+        this.cdr.markForCheck();
+      },
+    });
   }
 }
 

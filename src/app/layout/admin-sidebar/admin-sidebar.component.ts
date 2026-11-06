@@ -12,6 +12,9 @@ interface NavItem {
   selector: 'app-admin-sidebar',
   standalone: true,
   imports: [CommonModule, RouterModule],
+  host: {
+    class: 'h-full flex shrink-0',
+  },
   template: `
     <!-- Mobile Backdrop -->
     @if (isOpen) {
@@ -23,7 +26,7 @@ interface NavItem {
 
     <!-- Sidebar Aside -->
     <aside
-      class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-slate-900 border-r border-slate-800 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0"
+      class="fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col bg-slate-900 border-r border-slate-800 transition-transform duration-300 ease-in-out lg:static lg:h-full lg:translate-x-0"
       [class.-translate-x-full]="!isOpen"
       [class.translate-x-0]="isOpen"
     >

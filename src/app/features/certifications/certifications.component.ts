@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AdminCertificationDto, CreateCertificationRequest } from '../../core/models/certification.model';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-certifications',
@@ -160,6 +161,7 @@ export class CertificationsComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private confirmService = inject(ConfirmDialogService);
 
   isLoading = true;
   certifications: AdminCertificationDto[] = [];
@@ -231,19 +233,27 @@ export class CertificationsComponent implements OnInit {
     });
   }
 
-  deleteCertification(cert: AdminCertificationDto): void {
-    if (window.confirm(`Delete certification "${cert.title}"?`)) {
-      this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/certifications/${cert.id}`).subscribe({
-        next: () => {
-          this.toastService.success('Certification deleted');
-          this.loadCertifications();
-        },
-        error: () => {
-          this.toastService.error('Failed to delete certification');
-          this.cdr.markForCheck();
-        },
-      });
-    }
+  async deleteCertification(cert: AdminCertificationDto): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Certification',
+      itemName: `${cert.title} (${cert.issuer})`,
+      message: `Are you sure you want to delete certification "${cert.title}" from "${cert.issuer}"?`,
+      confirmText: 'Delete Certification',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/certifications/${cert.id}`).subscribe({
+      next: () => {
+        this.toastService.success('Certification deleted');
+        this.loadCertifications();
+      },
+      error: () => {
+        this.toastService.error('Failed to delete certification');
+        this.cdr.markForCheck();
+      },
+    });
   }
 }
 

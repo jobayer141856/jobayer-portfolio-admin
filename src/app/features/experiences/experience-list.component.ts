@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AdminExperienceDto } from '../../core/models/experience.model';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-experience-list',
@@ -104,6 +105,7 @@ export class ExperienceListComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private confirmService = inject(ConfirmDialogService);
 
   isLoading = true;
   experiences: AdminExperienceDto[] = [];
@@ -129,18 +131,27 @@ export class ExperienceListComponent implements OnInit {
     });
   }
 
-  onDelete(exp: AdminExperienceDto): void {
-    if (window.confirm(`Delete experience at "${exp.organization}"?`)) {
-      this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/experiences/${exp.id}`).subscribe({
-        next: () => {
-          this.toastService.success(`Deleted experience at "${exp.organization}"`);
-          this.loadExperiences();
-        },
-        error: () => {
-          this.toastService.error('Failed to delete experience.');
-        },
-      });
-    }
+  async onDelete(exp: AdminExperienceDto): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Experience',
+      itemName: `${exp.roleTitle} at ${exp.organization}`,
+      message: `Are you sure you want to delete your experience record for "${exp.roleTitle}" at "${exp.organization}"? This cannot be undone.`,
+      confirmText: 'Delete Experience',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/experiences/${exp.id}`).subscribe({
+      next: () => {
+        this.toastService.success(`Deleted experience at "${exp.organization}"`);
+        this.loadExperiences();
+      },
+      error: () => {
+        this.toastService.error('Failed to delete experience.');
+        this.cdr.markForCheck();
+      },
+    });
   }
 }
 

@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AdminContactMessageDto, MessageStatus } from '../../core/models/contact.model';
 import { PaginatedList } from '../../core/models/common.model';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-messages',
@@ -170,6 +171,7 @@ export class MessagesComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private confirmService = inject(ConfirmDialogService);
 
   isLoading = true;
   messages: AdminContactMessageDto[] = [];
@@ -228,20 +230,28 @@ export class MessagesComponent implements OnInit {
     });
   }
 
-  deleteMessage(msg: AdminContactMessageDto): void {
-    if (window.confirm('Delete this inquiry?')) {
-      this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/messages/${msg.id}`).subscribe({
-        next: () => {
-          this.toastService.success('Message deleted');
-          this.activeMessage = null;
-          this.loadMessages();
-        },
-        error: () => {
-          this.toastService.error('Failed to delete message');
-          this.cdr.markForCheck();
-        },
-      });
-    }
+  async deleteMessage(msg: AdminContactMessageDto): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Inquiry',
+      itemName: `${msg.senderName} (${msg.senderEmail})`,
+      message: `Are you sure you want to delete this inquiry from "${msg.senderName}"?`,
+      confirmText: 'Delete Inquiry',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/messages/${msg.id}`).subscribe({
+      next: () => {
+        this.toastService.success('Message deleted');
+        this.activeMessage = null;
+        this.loadMessages();
+      },
+      error: () => {
+        this.toastService.error('Failed to delete message');
+        this.cdr.markForCheck();
+      },
+    });
   }
 }
 

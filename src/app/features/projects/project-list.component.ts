@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { AdminProjectDto } from '../../core/models/project.model';
 import { PaginatedList } from '../../core/models/common.model';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-project-list',
@@ -149,6 +150,7 @@ export class ProjectListComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private confirmService = inject(ConfirmDialogService);
 
   isLoading = true;
   projects: AdminProjectDto[] = [];
@@ -190,18 +192,27 @@ export class ProjectListComponent implements OnInit {
     });
   }
 
-  onDelete(project: AdminProjectDto): void {
-    if (window.confirm(`Are you sure you want to delete "${project.title}"? This cannot be undone.`)) {
-      this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/projects/${project.id}`).subscribe({
-        next: () => {
-          this.toastService.success(`Deleted "${project.title}"`);
-          this.loadProjects();
-        },
-        error: () => {
-          this.toastService.error('Failed to delete project.');
-        },
-      });
-    }
+  async onDelete(project: AdminProjectDto): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Project',
+      itemName: project.title,
+      message: `Are you sure you want to permanently delete "${project.title}"? All case study data and details will be removed.`,
+      confirmText: 'Delete Project',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/projects/${project.id}`).subscribe({
+      next: () => {
+        this.toastService.success(`Deleted "${project.title}"`);
+        this.loadProjects();
+      },
+      error: () => {
+        this.toastService.error('Failed to delete project.');
+        this.cdr.markForCheck();
+      },
+    });
   }
 }
 

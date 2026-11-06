@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AdminSkillCategoryDto, AdminSkillItemDto, CreateSkillCategoryRequest, CreateSkillItemRequest } from '../../core/models/skill.model';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-skills',
@@ -201,6 +202,7 @@ export class SkillsComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private confirmService = inject(ConfirmDialogService);
 
   isLoading = true;
   categories: AdminSkillCategoryDto[] = [];
@@ -277,19 +279,27 @@ export class SkillsComponent implements OnInit {
     });
   }
 
-  deleteCategory(cat: AdminSkillCategoryDto): void {
-    if (window.confirm(`Delete category "${cat.name}" and all its skills?`)) {
-      this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/skills/categories/${cat.id}`).subscribe({
-        next: () => {
-          this.toastService.success('Category deleted');
-          this.loadSkills();
-        },
-        error: () => {
-          this.toastService.error('Failed to delete category');
-          this.cdr.markForCheck();
-        },
-      });
-    }
+  async deleteCategory(cat: AdminSkillCategoryDto): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Skill Category',
+      itemName: cat.name,
+      message: `Are you sure you want to delete category "${cat.name}" and all skills categorized under it? This cannot be undone.`,
+      confirmText: 'Delete Category',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/skills/categories/${cat.id}`).subscribe({
+      next: () => {
+        this.toastService.success('Category deleted');
+        this.loadSkills();
+      },
+      error: () => {
+        this.toastService.error('Failed to delete category');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   openItemModal(categoryId: string): void {
@@ -324,19 +334,27 @@ export class SkillsComponent implements OnInit {
     });
   }
 
-  deleteItem(item: AdminSkillItemDto): void {
-    if (window.confirm(`Delete skill "${item.name}"?`)) {
-      this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/skills/items/${item.id}`).subscribe({
-        next: () => {
-          this.toastService.success('Skill deleted');
-          this.loadSkills();
-        },
-        error: () => {
-          this.toastService.error('Failed to delete skill');
-          this.cdr.markForCheck();
-        },
-      });
-    }
+  async deleteItem(item: AdminSkillItemDto): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Skill',
+      itemName: item.name,
+      message: `Are you sure you want to delete skill "${item.name}"?`,
+      confirmText: 'Delete Skill',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/skills/items/${item.id}`).subscribe({
+      next: () => {
+        this.toastService.success('Skill deleted');
+        this.loadSkills();
+      },
+      error: () => {
+        this.toastService.error('Failed to delete skill');
+        this.cdr.markForCheck();
+      },
+    });
   }
 }
 

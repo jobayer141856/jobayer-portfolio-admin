@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { MediaAssetDto } from '../../core/models/media.model';
 import { PaginatedList } from '../../core/models/common.model';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-media',
@@ -110,6 +111,7 @@ export class MediaComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private confirmService = inject(ConfirmDialogService);
 
   isLoading = true;
   isUploading = false;
@@ -185,19 +187,27 @@ export class MediaComponent implements OnInit {
     );
   }
 
-  deleteAsset(asset: MediaAssetDto): void {
-    if (window.confirm(`Delete media asset "${asset.originalFileName}"?`)) {
-      this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/media/${asset.id}`).subscribe({
-        next: () => {
-          this.toastService.success('Media asset deleted');
-          this.loadMedia();
-        },
-        error: () => {
-          this.toastService.error('Failed to delete media asset');
-          this.cdr.markForCheck();
-        },
-      });
-    }
+  async deleteAsset(asset: MediaAssetDto): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Media Asset',
+      itemName: asset.originalFileName,
+      message: `Are you sure you want to permanently delete "${asset.originalFileName}"? Any project, profile, or link referencing this file will be affected.`,
+      confirmText: 'Delete Asset',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/media/${asset.id}`).subscribe({
+      next: () => {
+        this.toastService.success('Media asset deleted');
+        this.loadMedia();
+      },
+      error: () => {
+        this.toastService.error('Failed to delete media asset');
+        this.cdr.markForCheck();
+      },
+    });
   }
 }
 

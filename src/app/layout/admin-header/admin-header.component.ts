@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/auth/auth.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-admin-header',
@@ -71,9 +72,17 @@ import { AuthService } from '../../core/auth/auth.service';
 export class AdminHeaderComponent {
   @Output() toggleSidebar = new EventEmitter<void>();
   authService = inject(AuthService);
+  private confirmService = inject(ConfirmDialogService);
 
-  onLogout(): void {
-    if (window.confirm('Are you sure you want to log out of the admin panel?')) {
+  async onLogout(): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Sign Out',
+      message: 'Are you sure you want to log out of the admin panel?',
+      confirmText: 'Sign Out',
+      variant: 'warning',
+    });
+
+    if (confirmed) {
       this.authService.logout();
     }
   }

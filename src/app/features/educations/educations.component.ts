@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AdminEducationDto, CreateEducationRequest } from '../../core/models/education.model';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-educations',
@@ -216,6 +217,7 @@ export class EducationsComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private confirmService = inject(ConfirmDialogService);
 
   isLoading = true;
   educations: AdminEducationDto[] = [];
@@ -298,19 +300,27 @@ export class EducationsComponent implements OnInit {
     });
   }
 
-  deleteEducation(edu: AdminEducationDto): void {
-    if (window.confirm(`Delete education record from "${edu.institution}"?`)) {
-      this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/educations/${edu.id}`).subscribe({
-        next: () => {
-          this.toastService.success('Education record deleted');
-          this.loadEducations();
-        },
-        error: () => {
-          this.toastService.error('Failed to delete education record');
-          this.cdr.markForCheck();
-        },
-      });
-    }
+  async deleteEducation(edu: AdminEducationDto): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Education Record',
+      itemName: `${edu.degree} - ${edu.institution}`,
+      message: `Are you sure you want to delete the academic background record for "${edu.degree}" from "${edu.institution}"?`,
+      confirmText: 'Delete Record',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.http.delete(`${environment.apiBaseUrl}/api/v1/admin/educations/${edu.id}`).subscribe({
+      next: () => {
+        this.toastService.success('Education record deleted');
+        this.loadEducations();
+      },
+      error: () => {
+        this.toastService.error('Failed to delete education record');
+        this.cdr.markForCheck();
+      },
+    });
   }
 }
 

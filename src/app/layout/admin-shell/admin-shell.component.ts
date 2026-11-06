@@ -4,15 +4,17 @@ import { RouterModule } from '@angular/router';
 import { AdminSidebarComponent } from '../admin-sidebar/admin-sidebar.component';
 import { AdminHeaderComponent } from '../admin-header/admin-header.component';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-admin-shell',
   standalone: true,
-  imports: [CommonModule, RouterModule, AdminSidebarComponent, AdminHeaderComponent],
+  imports: [CommonModule, RouterModule, AdminSidebarComponent, AdminHeaderComponent, ConfirmDialogComponent],
   template: `
     <div class="flex h-screen bg-slate-950 overflow-hidden text-slate-100">
       <!-- Sidebar -->
       <app-admin-sidebar
+        class="h-full shrink-0 flex"
         [isOpen]="isSidebarOpen"
         (closeSidebar)="isSidebarOpen = false"
       />
@@ -60,6 +62,9 @@ import { ToastService } from '../../core/services/toast.service';
           </div>
         }
       </div>
+
+      <!-- Global Confirm Dialog Modal -->
+      <app-confirm-dialog />
     </div>
   `,
 })
