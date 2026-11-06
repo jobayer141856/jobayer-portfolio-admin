@@ -1,0 +1,12 @@
+**/.git
+**/.angular
+**/node_modules
+**/dist
+**/.vscode
+.env
+.env.*
+.envv*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
