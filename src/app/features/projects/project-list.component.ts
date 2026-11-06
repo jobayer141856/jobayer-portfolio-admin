@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -148,6 +148,7 @@ import { ToastService } from '../../core/services/toast.service';
 export class ProjectListComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = true;
   projects: AdminProjectDto[] = [];
@@ -161,15 +162,18 @@ export class ProjectListComponent implements OnInit {
 
   loadProjects(): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.http.get<PaginatedList<AdminProjectDto>>(`${environment.apiBaseUrl}/api/v1/admin/projects`).subscribe({
       next: (res) => {
         this.projects = res.items || [];
         this.filterProjects();
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load projects.');
+        this.cdr.markForCheck();
       },
     });
   }

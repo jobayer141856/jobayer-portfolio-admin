@@ -16,6 +16,7 @@
             "outputPath": "dist/jobayer-portfolio-admin",
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
+            "polyfills": ["zone.js"],
             "assets": [
               {
                 "glob": "**/*",

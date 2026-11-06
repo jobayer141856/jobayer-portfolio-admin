@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -103,6 +103,7 @@ import { ToastService } from '../../core/services/toast.service';
 export class ExperienceListComponent implements OnInit {
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = true;
   experiences: AdminExperienceDto[] = [];
@@ -113,14 +114,17 @@ export class ExperienceListComponent implements OnInit {
 
   loadExperiences(): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.http.get<AdminExperienceDto[]>(`${environment.apiBaseUrl}/api/v1/admin/experiences`).subscribe({
       next: (res) => {
         this.experiences = res || [];
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load experiences.');
+        this.cdr.markForCheck();
       },
     });
   }

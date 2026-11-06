@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -179,6 +179,7 @@ import { DashboardSummaryDto } from '../../core/models/dashboard.model';
 })
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
+  private cdr = inject(ChangeDetectorRef);
   isLoading = true;
   summary: DashboardSummaryDto | null = null;
 
@@ -188,10 +189,12 @@ export class DashboardComponent implements OnInit {
 
   loadSummary(): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.http.get<DashboardSummaryDto>(`${environment.apiBaseUrl}/api/v1/admin/dashboard/summary`).subscribe({
       next: (res) => {
         this.summary = res;
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         // Fallback default state if API is offline
@@ -204,6 +207,7 @@ export class DashboardComponent implements OnInit {
           totalMedia: 0,
         };
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }

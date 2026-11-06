@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -22,10 +22,10 @@ import { mapBackendValidationErrors } from '../../core/utils/form-error-mapper';
         <button
           type="button"
           (click)="onSubmit()"
-          [disabled]="isSaving || profileForm.invalid"
+          [disabled]="isSaving() || profileForm.invalid"
           class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
         >
-          @if (isSaving) {
+          @if (isSaving()) {
             <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
@@ -37,7 +37,7 @@ import { mapBackendValidationErrors } from '../../core/utils/form-error-mapper';
         </button>
       </div>
 
-      @if (isLoading) {
+      @if (isLoading()) {
         <div class="p-8 text-center text-slate-500">Loading profile data...</div>
       } @else {
         <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="space-y-6">
@@ -248,11 +248,12 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
-  isLoading = true;
-  isSaving = false;
-  isUploadingCv = signal<boolean>(false);
-  currentResumeUrl = signal<string | null>(null);
+  readonly isLoading = signal(true);
+  readonly isSaving = signal(false);
+  readonly isUploadingCv = signal(false);
+  readonly currentResumeUrl = signal<string | null>(null);
 
   profileForm: FormGroup = this.fb.group({
     displayName: ['', [Validators.required, Validators.maxLength(150)]],
@@ -274,7 +275,7 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
   }
 
   hasUnsavedChanges(): boolean {
-    return this.profileForm.dirty && !this.isSaving;
+    return this.profileForm.dirty && !this.isSaving();
   }
 
   ngOnInit(): void {
@@ -282,7 +283,7 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
   }
 
   loadProfile(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.http.get<AdminProfileDto>(`${environment.apiBaseUrl}/api/v1/admin/profile`).subscribe({
       next: (data) => {
         this.profileForm.patchValue({
@@ -321,11 +322,13 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
         this.currentResumeUrl.set(fullResumeUrl);
 
         this.profileForm.markAsPristine();
-        this.isLoading = false;
+        this.isLoading.set(false);
+        this.cdr.markForCheck();
       },
-      error: (err) => {
-        this.isLoading = false;
+      error: () => {
+        this.isLoading.set(false);
         this.toastService.error('Could not load profile from API');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -352,12 +355,12 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
       return;
     }
 
-    this.isSaving = true;
+    this.isSaving.set(true);
     const formValue = this.profileForm.value as UpdateProfileRequest;
 
     this.http.put<AdminProfileDto>(`${environment.apiBaseUrl}/api/v1/admin/profile`, formValue).subscribe({
       next: (updated) => {
-        this.isSaving = false;
+        this.isSaving.set(false);
         const fullResumeUrl = updated.resumePdfUrl
           ? updated.resumePdfUrl.startsWith('http')
             ? updated.resumePdfUrl
@@ -367,15 +370,17 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
 
         this.profileForm.markAsPristine();
         this.toastService.success('Profile updated successfully!');
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.isSaving = false;
+        this.isSaving.set(false);
         const errors = mapBackendValidationErrors(this.profileForm, err);
         if (errors.length > 0) {
           this.toastService.error(errors.join(', '));
         } else {
           this.toastService.error('Failed to update profile.');
         }
+        this.cdr.markForCheck();
       },
     });
   }
@@ -406,10 +411,12 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
         this.currentResumeUrl.set(fullUrl);
         this.profileForm.markAsDirty();
         this.toastService.success('CV uploaded successfully! Remember to save your profile.');
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isUploadingCv.set(false);
         this.toastService.error('Failed to upload CV.');
+        this.cdr.markForCheck();
       },
     });
   }
