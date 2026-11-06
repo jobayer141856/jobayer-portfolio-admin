@@ -1,0 +1,10 @@
+services:
+  portfolio-admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jobayer-portfolio-admin
+    restart: unless-stopped
+    ports:
+      - "4300:80"
+
