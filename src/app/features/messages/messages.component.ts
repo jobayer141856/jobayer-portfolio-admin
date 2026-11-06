@@ -59,8 +59,14 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
       @if (isLoading) {
         <div class="p-12 text-center text-slate-500">Loading inquiries...</div>
       } @else if (messages.length === 0) {
-        <div class="p-12 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
-          <p class="text-slate-400 text-sm">No contact inquiries found in this view.</p>
+        <div class="p-12 text-center bg-slate-900/50 border border-slate-800 rounded-2xl flex flex-col items-center justify-center space-y-2">
+          <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 mb-1">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <p class="text-slate-200 text-sm font-medium">Inbox is empty</p>
+          <p class="text-slate-500 text-xs">New inquiries sent from the public website contact form will appear here.</p>
         </div>
       } @else {
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -70,20 +76,16 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
               <div
                 (click)="selectMessage(msg)"
                 class="p-4 rounded-xl border cursor-pointer transition-all text-xs"
-                [class.bg-slate-900]="activeMessage?.id !== msg.id"
-                [class.border-slate-800]="activeMessage?.id !== msg.id"
-                [class.bg-blue-950-30]="activeMessage?.id === msg.id"
-                [class.border-blue-500]="activeMessage?.id === msg.id"
-                [class.hover:border-slate-700]="activeMessage?.id !== msg.id"
+                [ngClass]="activeMessage?.id === msg.id ? 'bg-blue-950/40 border-blue-500 shadow-md' : 'hover:border-slate-700 bg-slate-900 border-slate-800'"
               >
                 <div class="flex items-center justify-between mb-1">
                   <span class="font-semibold text-slate-100">{{ msg.senderName }}</span>
                   <span
-                    class="px-1.5 py-0.5 rounded text-[10px] font-mono"
-                    [class.bg-amber-500-10]="msg.status === 'Unread'"
-                    [class.text-amber-400]="msg.status === 'Unread'"
-                    [class.bg-slate-800]="msg.status === 'Read'"
-                    [class.text-slate-400]="msg.status === 'Read'"
+                    class="px-2 py-0.5 rounded text-[10px] font-mono border"
+                    [ngClass]="{
+                      'bg-amber-500/10 text-amber-400 border-amber-500/20': msg.status === 'Unread',
+                      'bg-slate-800 text-slate-400 border-slate-700': msg.status === 'Read'
+                    }"
                   >
                     {{ msg.status }}
                   </span>

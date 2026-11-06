@@ -103,13 +103,12 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
                     </td>
                     <td class="py-3 px-4">
                       <span
-                        class="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider"
-                        [class.bg-emerald-500-10]="project.status === 'Published'"
-                        [class.text-emerald-400]="project.status === 'Published'"
-                        [class.bg-amber-500-10]="project.status === 'Draft'"
-                        [class.text-amber-400]="project.status === 'Draft'"
-                        [class.bg-slate-800]="project.status === 'Archived'"
-                        [class.text-slate-400]="project.status === 'Archived'"
+                        class="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide border"
+                        [ngClass]="{
+                          'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': project.status === 'Published',
+                          'bg-amber-500/10 text-amber-400 border-amber-500/20': project.status === 'Draft',
+                          'bg-slate-800 text-slate-400 border-slate-700': project.status === 'Archived'
+                        }"
                       >
                         {{ project.status }}
                       </span>

@@ -72,8 +72,8 @@ import { DashboardSummaryDto } from '../../core/models/dashboard.model';
           </div>
 
           <!-- Card: Unread Messages -->
-          <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm flex flex-col justify-between"
-               [class.border-amber-500-30]="summary.unreadMessages > 0">
+          <div class="p-5 rounded-xl bg-slate-900 border shadow-sm flex flex-col justify-between"
+               [ngClass]="summary.unreadMessages > 0 ? 'border-amber-500/40 bg-amber-500/5' : 'border-slate-800'">
             <div class="flex items-center justify-between text-slate-400 text-xs font-medium uppercase tracking-wider">
               <span>Inbox Inquiries</span>
               <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
