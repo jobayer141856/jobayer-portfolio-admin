@@ -13,8 +13,9 @@ yarn-error.log*
 /.angular
 
 # Environment & local secrets
-.env
-.env.local
+.env*
+.envv*
+!.env.example
 
 # IDEs and editors
 .idea/
