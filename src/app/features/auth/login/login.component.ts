@@ -130,10 +130,20 @@ export class LoginComponent {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage =
-          err?.error?.detail ||
-          err?.error?.title ||
-          'Invalid credentials. Please verify your email and password.';
+        if (err.status === 0) {
+          this.errorMessage = 'Unable to connect to the backend server. Please check network connectivity.';
+        } else if (err?.error?.errors?.Credentials?.[0]) {
+          this.errorMessage = err.error.errors.Credentials[0];
+        } else if (err?.error?.errors) {
+          const firstKey = Object.keys(err.error.errors)[0];
+          this.errorMessage = err.error.errors[firstKey]?.[0] || 'Validation error.';
+        } else {
+          this.errorMessage =
+            err?.error?.detail ||
+            err?.error?.title ||
+            err?.error?.message ||
+            'Invalid credentials. Please verify your email and password.';
+        }
         this.cdr.markForCheck();
       },
     });
