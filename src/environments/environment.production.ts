@@ -1,5 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'http://localhost:5050',
+  apiBaseUrl: 'https://jobayer-portfolio-api.runasp.net',
 };
-
