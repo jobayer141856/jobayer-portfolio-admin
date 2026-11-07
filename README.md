@@ -47,18 +47,18 @@ flowchart TD
 
 The dashboard provides specialized, full-featured interfaces for every aspect of the portfolio:
 
-| Module | Route | Capabilities |
-| :--- | :--- | :--- |
-| **📊 Telemetry Dashboard** | `/dashboard` | Real-time system overview, message counts, active projects counter, and unread notification alerts. |
-| **👤 Profile & Bio** | `/profile` | Manage display name, headline, professional biography, working approach, and social profile links. |
-| **🚀 Project Portfolio** | `/projects` | Full CRUD for case studies: Markdown-ready summaries, feature toggles, tech stack tags, live demo & GitHub links. |
-| **💼 Career Experience** | `/experiences` | Chronological career history: organization, role, employment type, location, bulleted responsibilities, and "Current" badges. |
-| **🎓 Education & Honors** | `/educations` | Degree programs, institutions, fields of study, start/end dates, GPAs, and academic achievements. |
-| **🛠 Technical Skills** | `/skills` | Categorized capability management (Backend, Frontend, Cloud/DevOps, Architecture), proficiency ratings, and order index. |
-| **📜 Certifications** | `/certifications` | Professional certificates, issuing bodies, issue/expiration dates, credential IDs, and verification URLs. |
-| **📚 Research Publications** | `/publications` | Academic research papers, conference proceedings, peer-reviewed journals, publication dates, and DOIs. |
-| **✉️ Inquiries & Messages** | `/messages` | Read-only contact message viewer with unread indicators, sender audit metadata, and quick reply links. |
-| **📁 Media & Document Asset Manager** | `/media` | Drag-and-drop file upload for project screenshots and resumes, with instant preview and copy-to-clipboard public URLs. |
+| Module                                | Route             | Capabilities                                                                                                                  |
+| :------------------------------------ | :---------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| **📊 Telemetry Dashboard**            | `/dashboard`      | Real-time system overview, message counts, active projects counter, and unread notification alerts.                           |
+| **👤 Profile & Bio**                  | `/profile`        | Manage display name, headline, professional biography, working approach, and social profile links.                            |
+| **🚀 Project Portfolio**              | `/projects`       | Full CRUD for case studies: Markdown-ready summaries, feature toggles, tech stack tags, live demo & GitHub links.             |
+| **💼 Career Experience**              | `/experiences`    | Chronological career history: organization, role, employment type, location, bulleted responsibilities, and "Current" badges. |
+| **🎓 Education & Honors**             | `/educations`     | Degree programs, institutions, fields of study, start/end dates, GPAs, and academic achievements.                             |
+| **🛠 Technical Skills**                | `/skills`         | Categorized capability management (Backend, Frontend, Cloud/DevOps, Architecture), proficiency ratings, and order index.      |
+| **📜 Certifications**                 | `/certifications` | Professional certificates, issuing bodies, issue/expiration dates, credential IDs, and verification URLs.                     |
+| **📚 Research Publications**          | `/publications`   | Academic research papers, conference proceedings, peer-reviewed journals, publication dates, and DOIs.                        |
+| **✉️ Inquiries & Messages**           | `/messages`       | Read-only contact message viewer with unread indicators, sender audit metadata, and quick reply links.                        |
+| **📁 Media & Document Asset Manager** | `/media`          | Drag-and-drop file upload for project screenshots and resumes, with instant preview and copy-to-clipboard public URLs.        |
 
 ---
 
@@ -122,35 +122,44 @@ jobayer-portfolio-admin/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - [Node.js](https://nodejs.org/) (v22.x or later recommended)
 - [Angular CLI](https://angular.dev/) (`npm install -g @angular/cli`)
 - Running backend API (`jobayer-portfolio-api` on port `5050` or `5000`)
 
 ### 1. Installation
+
 Clone the repository and install dependencies:
+
 ```bash
 cd jobayer-portfolio-admin
 npm install
 ```
 
 ### 2. Environment Configuration
+
 Inspect or update `src/environments/environment.ts` to point to your running API:
+
 ```typescript
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:5050' // Or your local backend URL
+  apiBaseUrl: "http://localhost:5050", // Or your local backend URL
 };
 ```
 
 ### 3. Start the Development Server
+
 ```bash
 npm start
 ```
+
 The application will launch with hot module replacement at:
 👉 **`http://localhost:4300`**
 
 ### 4. Default Bootstrap Credentials
+
 When the backend API seeds the database for the first time, the default admin account is:
+
 - **Email:** `admin@jobayer.dev`
 - **Password:** `Admin@123456`
 
@@ -158,11 +167,11 @@ When the backend API seeds the database for the first time, the default admin ac
 
 ## 🛠 Available NPM Scripts
 
-| Script | Command | Purpose |
-| :--- | :--- | :--- |
-| **Start** | `npm start` | Runs the Angular development server on port `4300`. |
-| **Build** | `npm run build` | Compiles the production bundle into `dist/jobayer-portfolio-admin`. |
-| **Watch** | `npm run watch` | Builds and watches for changes during development. |
+| Script     | Command          | Purpose                                                                            |
+| :--------- | :--------------- | :--------------------------------------------------------------------------------- |
+| **Start**  | `npm start`      | Runs the Angular development server on port `4300`.                                |
+| **Build**  | `npm run build`  | Compiles the production bundle into `dist/jobayer-portfolio-admin`.                |
+| **Watch**  | `npm run watch`  | Builds and watches for changes during development.                                 |
 | **Format** | `npm run format` | Enforces code formatting via Prettier across all `.ts`, `.html`, and `.css` files. |
 
 ---
@@ -170,10 +179,12 @@ When the backend API seeds the database for the first time, the default admin ac
 ## 🐳 Docker Deployment
 
 The application includes an optimized multi-stage `Dockerfile`:
+
 1. **Build Stage**: Uses `node:22-alpine` to compile an ahead-of-time (AOT) production bundle.
 2. **Runtime Stage**: Serves the lightweight compiled artifacts via `nginx:alpine` with HTML5 pushState routing configured.
 
 ### Build and Run Standalone Container
+
 ```bash
 # Build image
 docker build -t jobayer-portfolio-admin .
@@ -183,6 +194,7 @@ docker run -d -p 4300:80 --name portfolio-admin jobayer-portfolio-admin
 ```
 
 ### Run via Docker Compose (Root Directory)
+
 ```bash
 # From workspace root
 docker-compose up -d --build portfolio-admin
@@ -195,6 +207,7 @@ docker-compose up -d --build portfolio-admin
 The admin portal is a fully static client application that can be hosted for **$0 / month** on edge networks:
 
 ### Deploying to Cloudflare Pages
+
 1. Push your repository to GitHub.
 2. In Cloudflare Dashboard, go to **Workers & Pages** $\rightarrow$ **Create Application** $\rightarrow$ **Pages**.
 3. Select your GitHub repository.
@@ -210,4 +223,5 @@ The admin portal is a fully static client application that can be hosted for **$
 ---
 
 ## 📄 License
+
 This project is part of the personal portfolio system of [Md. Jobayer Hossen](https://github.com/jobayer141856) and is licensed under the MIT License.
